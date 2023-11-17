@@ -3,14 +3,17 @@ import tabulate
 import os
 import math
 from typing import List
-import json
-import os
 import shutil
 import time
-
+from peewee import *
+from Course import Course
+from Admin import Admin
+from Applicant import Applicant
+from Faculty import Faculty
+from Staff import Staff
+from Student import Student
+from Section import Section
 class Database:
-    DATADIR = "../data/"
-    EXTDIR = "../external/"
 
     def __init__(self):
         self.applicants = []
@@ -168,36 +171,15 @@ class Database:
         print(table)
 
     def printListStudents(self):
-        table = tabulate.Table()
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Student ID", "Name", "Email"])
-        for user in self.students:
-            table.add_row([str(user.getStudentID()), user.getLName() + ", " + user.getFName() + " " + user.getMName() + ".", user.getEmail()])
-        print(table)
+        pass
 
     def printListFaculty(self):
-        table = tabulate.Table()
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Faculty ID", "Name", "Email"])
-        for user in self.faculty:
-            table.add_row([str(user.getFacultyID()), user.getLName() + ", " + user.getFName() + " " + user.getMName() + ".", user.getEmail()])
-        print(table)
-
+        pass
     def printListStaff(self):
-        table = tabulate.Table()
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Staff ID", "Name", "Email"])
-        for user in self.staff:
-            table.add_row([str(user.getStaffID()), user.getLName() + ", " + user.getFName() + " " + user.getMName() + ".", user.getEmail()])
-        print(table)
+        pass
 
     def printListAdmin(self):
-        table = tabulate.Table()
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Admin ID", "Email"])
-        for user in self.admins:
-            table.add_row([str(user.getAdminID()), user.getEmail()])
-        print(table)
+        pass
 
     def printListCourse(self):
         pass
@@ -206,30 +188,10 @@ class Database:
         pass
 
     def printListSectionByCourse(self, course):
-        table = tabulate.Table()
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Section ID", "Section Name"])
-        sectionIDs = course.getSectionIDs()
-        for sectionID in sectionIDs:
-            section = next((s for s in self.sections if s.getSectionID() == sectionID), None)
-            if section:
-                table.add_row([str(sectionID), section.getSectionName()])
-        print(table)
+       pass
 
     def printClassReport(self, section):
-        enrolledStudentIDs = section.getEnrolledStudentIDs()
-        table = tabulate.Table()
-        print("Section Name: ", section.getSectionName())
-        print("Assigned Faculty: ", section.getAssignedFacultyID())
-        table.format().width(20).corner(" ").corner_color(tabulate.Color.cyan)
-        table.add_row(["Student ID", "Grade"])
-        for studentID in enrolledStudentIDs:
-            student = self.findStudentByID(studentID)
-            if student:
-                grade = student.getGrade(section.getSectionID())
-                table.add_row([str(studentID), str(grade)])
-        print("Class Report for Section: ", section.getSectionName())
-        print(table)
+        pass
 
     def saveList(self, dataDir, fileName, dataList):
         listJson = json.dumps(dataList)

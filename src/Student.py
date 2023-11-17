@@ -1,4 +1,4 @@
-
+from User import User
 class Student(User):
     def __init__(self, email, password, fname, mname, lname, studentID, uploadedDocuments=[]):
         super().__init__(email, password, fname, mname, lname)

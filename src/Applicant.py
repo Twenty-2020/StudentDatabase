@@ -1,3 +1,4 @@
+from User import User
 class Applicant(User):
     def __init__(self, fname, mname, lname, applicantID, uploadedDocuments):
         super().__init__(fname, mname, lname)

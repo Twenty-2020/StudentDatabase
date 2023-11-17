@@ -1,4 +1,4 @@
-
+from User import User
 class Faculty(User):
     def __init__(self, email, password, fname, mname, lname, facultyID):
         super().__init__(email, password, fname, mname, lname)

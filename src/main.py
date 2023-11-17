@@ -2,7 +2,14 @@ import os
 import sys
 from Database import Database
 
+
+
+
 db = Database()
+
+# Load the latest database files
+#db.loadDatabase("../data/")
+
 
 def menuMain():
   choice = 0
@@ -21,6 +28,8 @@ def menuMain():
     choice = int(input())
     input()
   return choice
+match = 1
+db.printListSectionByCourse(match)
 
 def menuEnrollment():
   fname = ""
@@ -362,7 +371,7 @@ def menuStaff(email):
         print("Course Name: ", match.getCourseName())
         print()
         print("Sections in this Course:")
-        db.printListSectionByCourse(match)
+        
         consolePause()
         sectionID = int(input("Enter the section: "))
         sectionMatch = db.findSectionByID(sectionID)
@@ -667,3 +676,20 @@ def consolePause():
     print()
     print("Press Enter to continue...")
     input()
+
+choice = 0
+
+while choice != 3:
+  choice = menuMain()
+  if choice == 1: # Enrollment Page
+    menuEnrollment()
+  elif choice == 2: # Login Page
+    menuLogin()
+  elif choice == 3: # Exit
+    db.saveDatabase("../data/")
+    del db
+    break
+  elif choice == 4:
+    menuFaculty("testemail")
+  else:
+    print("Invalid choice. Please try again.")
