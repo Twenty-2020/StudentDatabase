@@ -1,32 +1,15 @@
+from peewee import *
+from BaseModel import BaseModel
 
-class User:
-    def __init__(self, email, password, fname=None, mname=None, lname=None):
-        self.email = email
-        self.password = password
-        self.fname = fname
-        self.mname = mname
-        self.lname = lname
+db = SqliteDatabase('studentdatabase.db') 
 
-    def getEmail(self):
-        return self.email
+class User(BaseModel):
+    userID = AutoField()
+    fname = CharField()
+    mname = CharField()
+    lname = CharField()
+    email = CharField(unique = True)
+    password = CharField()
+    role = CharField()
 
-    def getPassword(self):
-        return self.password
-
-    def getFName(self):
-        return self.fname
-
-    def getMName(self):
-        return self.mname
-
-    def getLName(self):
-        return self.lname
-
-    def getFullName(self):
-        return f"{self.lname}, {self.fname} {self.mname}" if self.mname else f"{self.lname}, {self.fname}"
-
-    def getClassName(self):
-        return "User"
-
-    def setPassword(self, newPassword):
-        self.password = newPassword
+  
