@@ -6,7 +6,7 @@ db = SqliteDatabase('studentdatabase.db')
 
 class Admin(User):
     adminID = AutoField(null = False)
-    userID = ForeignKeyField(User, to_field="userID", null = False))
+    userID = ForeignKeyField(User, to_field="userID", null = False)
     fname = CharField(null = False)
     mname = CharField()
     lname = CharField(null = False)
