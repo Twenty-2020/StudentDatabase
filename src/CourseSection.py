@@ -6,5 +6,5 @@ from Section import Section
 db = SqliteDatabase('studentdatabase.db') 
 
 class CourseSection(BaseModel):
-    courseID = ForeignKeyField(Course, to_field="courseID")
-    sectionID = ForeignKeyField(Section, to_field="sectionID")
+    courseID = ForeignKeyField(Course, to_field="courseID", null = False))
+    sectionID = ForeignKeyField(Section, to_field="sectionID", null = False))
