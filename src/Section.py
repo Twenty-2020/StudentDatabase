@@ -1,8 +1,9 @@
 from BaseModel import BaseModel
-from peewee import *
-
-db = SqliteDatabase('studentdatabase.db') 
+from peewee import AutoField, CharField
 
 class Section(BaseModel):
-    sectionID = AutoField(null = False)
-    sectionname = CharField(null = False)
+    sectionID = AutoField(primary_key=True)
+    sectionname = CharField()
+
+# Assuming 'db' is the instance of SqliteDatabase
+db.create_tables([Section], safe=True)
