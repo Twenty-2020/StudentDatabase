@@ -1,15 +1,16 @@
-from peewee import *
-from BaseModel import BaseModel
+from peewee import Model, SqliteDatabase, AutoField, CharField
 
-db = SqliteDatabase('studentdatabase.db') 
+db = SqliteDatabase('studentdatabase.db')
+
+class BaseModel(Model):
+    class Meta:
+        database = db
 
 class User(BaseModel):
-    userID = AutoField(null = False)
-    fname = CharField(null = False)
+    userID = AutoField(primary_key=True)
+    fname = CharField()
     mname = CharField()
-    lname = CharField(null = False)
-    email = CharField(unique = True)
+    lname = CharField()
+    email = CharField(unique=True)
     password = CharField()
     role = CharField()
-
-  
