@@ -5,11 +5,11 @@ from peewee import *
 db = SqliteDatabase('studentdatabase.db') 
 
 class Staff(User):
-    staffID = AutoField()
-    userID = ForeignKeyField(User, to_field="userID")
-    fname = CharField()
+    staffID = AutoField(null = False)
+    userID = ForeignKeyField(User, to_field="userID", null = False)
+    fname = CharField(null = False)
     mname = CharField()
-    lname = CharField()
+    lname = CharField(null = False)
     email = CharField(unique = True)
     password = CharField()
     role = CharField()
