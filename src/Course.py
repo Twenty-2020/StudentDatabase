@@ -4,5 +4,5 @@ from peewee import *
 db = SqliteDatabase('studentdatabase.db') 
 
 class Course(BaseModel):
-    courseID = AutoField()
-    coursename = CharField()
+    courseID = AutoField(null = False))
+    coursename = CharField(null = False))
