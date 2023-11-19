@@ -11,5 +11,3 @@ class Applicant(User):
     lname = CharField(null = False)
     email = CharField(unique = True)
     uploadeddocs = CharField()
-    role = CharField()
-
