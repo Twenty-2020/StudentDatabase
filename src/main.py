@@ -1,695 +1,579 @@
-import os
-import sys
+import os # for clearing screen
+import re # for regex input validation
+
+from peewee import *
+import importlib
+import Database
+from Student import Student
+from Faculty import Faculty
+from Applicant import Applicant
+importlib.reload(Database)
 from Database import Database
+from datetime import datetime
+import easygui
 
+# requires 'pip install prompt_toolkit'
+from prompt_toolkit.document import Document
+from prompt_toolkit.validation import Validator, ValidationError # for input validation
+from prompt_toolkit import prompt
 
+# Get the parent directory of the current script
+parent_dir = os.path.dirname(os.getcwd())
 
+# Create the .db file in the parent directory
+db_file = os.path.join(parent_dir, 'studentdatabase.db')
+db = SqliteDatabase(db_file)
+database = Database(db)
 
-db = Database()
-
-# Load the latest database files
-#db.loadDatabase("../data/")
-
+# INPUT VALIDATOR
+class InputValidator(Validator):
+    
+    def __init__(self, numMenu=0, alphaSpace=False, num=False, yes=False, empty=True):
+        self.numMenu = numMenu
+        self.alphaSpace = alphaSpace
+        self.num = num
+        self.yes = yes
+        self.empty = empty
+    
+    def validate(self, document: Document):
+        text = document.text
+        if self.empty and not text:
+            raise ValidationError(message='')
+        elif ((self.numMenu > 0) or self.num) and not text.isdigit():
+            raise ValidationError(message='This input contains non-numeric characters')
+        elif (self.numMenu > 0) and text.isdigit() and not (int(text) >= 1 and int(text) <= self.numMenu):
+            raise ValidationError(message='The menu only has digits 1 to ' + str(self.numMenu) + ' as choices')
+        elif self.alphaSpace and not re.match("^[a-z ]+$", text.lower()):
+            raise ValidationError(message='This input contains non-alphabet/space characters')
+        elif self.yes and not (text.lower()=='y' or text.lower()=='n'):
+            raise ValidationError(message='Your choice are only \'Y\' and \'N\'')
 
 def menuMain():
-  choice = 0
-  while not (choice > 0 and choice < 5):
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|     " + "\033[1;33m" + "ELMWOOD UNIVERSITY" + "\033[0m" + "\033[1;32m" + "     |")
-    print("==============================")
-    print("\033[0m")
-    print("\033[1;35m" + "1 " + "\033[0m" + "Enrollment Page")
-    print("\033[1;35m" + "2 " + "\033[0m" + "Login Page")
-    print("\033[1;35m" + "3 " + "\033[0m" + "Exit")
-    print()
-    print("\033[1;34m" + "Enter your choice: " + "\033[0m")
-    choice = int(input())
-    input()
-  return choice
-match = 1
-db.printListSectionByCourse(match)
+    choice = 0
+    while not (choice > 0 and choice < 5):
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|     " + "\033[1;33m" + "ELMWOOD UNIVERSITY" + "\033[0m" + "\033[1;32m" + "     |")
+        print("==============================")
+        print("\033[0m")
+        print("\033[1;35m" + "1 " + "\033[0m" + "Enrollment Page")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Login Page")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Exit")
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=3)))
+    return choice
 
 def menuEnrollment():
-  fname = ""
-  mname = ""
-  lname = ""
-  uploadedDocuments = []
-  
-  choice = 0
-  while choice != 4:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|          ENROLLMENT        |")
-    print("==============================")
-    print("\033[0m")
-  
-    print()
-    print("First Name:  ", fname)
-    print("Middle Name: ", mname)
-    print("Last Name:   ", lname)
-    print()
-  
-    print("\033[1;32m" + "1 " + "\033[0m" + "Fill-out Information")
-    print("\033[1;32m" + "2 " + "\033[0m" + "Upload Documents")
-    print("\033[1;32m" + "3 " + "\033[0m" + "Submit Application")
-    print("\033[1;32m" + "4 " + "\033[0m" + "Back to Main Menu")
-  
-    print()
-    print("\033[1;34m" + "Enter your choice: " + "\033[0m")
-    choice = int(input())
-    input()
+    fname = ""
+    mname = ""
+    lname = ""
+    email = ""
+    file = None
 
-    if choice == 1: # Fill-out Information
-      consoleClear()
-      print("Enter First Name:  ")
-      fname = input()
-      print("Enter Middle Name: ")
-      mname = input()
-      print("Enter Last Name:   ")
-      lname = input()
-    elif choice == 2: # Upload Documents
-      print("Selected Upload Documents")
-      print("All files in \"external/\" folder will be uploaded.")
-      confirm = input("Do you want to proceed? (Y/N): ")
-      if confirm == "y" or confirm == "Y":
-        #documentTimestamp = db.uploadDocument("Applicant")
-        uploadedDocuments.append(documentTimestamp)
-      else:
-        print("Cancelled uploading documents.")
-      consolePause()
-    elif choice == 3: # Submit Application
-      #db.newApplicant(fname, mname, lname, uploadedDocuments)
-      print("Successfully submitted application!")
-      choice = 4
-      consolePause()
-    elif choice == 4: # Back to Main Menu
-      pass
-    else:
-      print("\033[1;31m" + "Invalid choice. Please try again." + "\033[0m")
-  
+    choice = 0
+    while choice != 4:
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|          ENROLLMENT        |")
+        print("==============================")
+        print("\033[0m")
+
+        print()
+        print("*First Name:  ", fname)
+        print(" Middle Name: ", mname)
+        print("*Last Name:   ", lname)
+        print("*Email:       ", email)
+        print(" Document:    ", file)
+        print()
+
+        print("\033[1;32m" + "1 " + "\033[0m" + "Fill-out Information")
+        print("\033[1;32m" + "2 " + "\033[0m" + "Upload Documents")
+        print("\033[1;32m" + "3 " + "\033[0m" + "Submit Application")
+        print("\033[1;32m" + "4 " + "\033[0m" + "Back to Main Menu")
+
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=4)))
+
+        if choice == 1:  # Fill-out Information
+            consoleClear()
+            fname = prompt("*Enter First Name:  ", validator=InputValidator(alphaSpace=True))
+            mname = prompt(" Enter Middle Name: ", validator=InputValidator(alphaSpace=True, empty=False))
+            lname = prompt("*Enter Last Name:   ", validator=InputValidator(alphaSpace=True))
+            email = prompt("*Enter Email:       ", validator=InputValidator())
+        elif choice == 2:  # Upload Documents
+            print("Selected Upload Documents")
+            # Open a file dialog
+            file = easygui.fileopenbox()  # show an "Open" dialog box and return the path to the selected file
+        elif choice == 3:  # Submit Application
+            if (fname != None) and (lname != None) and (email != None):
+                database.createApplicant(fname, mname, lname, email)
+                if file:
+                    database.uploadDocument(email, file)
+                print("Successfully submitted application!")
+                choice = 4
+                consolePause()
+        elif choice == 4:
+            pass  # Back to Main Menu
+        else:
+            print("\033[1;31m" + "Invalid choice. Please try again." + "\033[0m")
+
 def menuLogin():
-  email = ""
-  password = ""
-  user = None
-    
-  choice = 0
-  while choice != 4:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|         LOGIN PAGE         |")
-    print("==============================")
-    print("\033[0m")
-      
-    print()
-    print("Email:    ", email)
-    print("Password: ", password)
-    print()
-      
-    print("1. Enter Email")
-    print("2. Enter Password")
+    email = ''
+    password = ''
+    role = None
+    choice = 0
+    while choice != 4:
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|         LOGIN PAGE         |")
+        print("==============================")
+        print("\033[0m")
 
-def menuStudent(email):
-  pass
-
-def menuFaculty(email):
-  pass
-
-def menuStaff(email):
-  pass
-
-def menuAdmin(email):
-  pass
-
-def menuCreateUser():
-  pass
-
-
-def menuStudent(email):
-  choice = 0
-  while choice != 3:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|           STUDENT          |")
-    print("==============================")
-    print("\033[0m")
-
-    print("1. Submit Documents")
-    print("2. See Information")
-    print("3. Logout")
-
-    print()
-    print("\033[1;34m", end="")
-    choice = int(input("Enter your choice: "))
-    print("\033[0m")
-    input()
-
-    if choice == 1:
-      print("Selected Submit Documents")
-      print("All files in \"external/\" folder will be uploaded.")
-      confirm = input("Do you want to proceed? (Y/N): ")
-      input()
-      if confirm.lower() == "y":
-        db.uploadDocument(email)
         print()
-        print("Documents have been uploaded.")
-      else:
-        print("Cancelled uploading documents.")
+        print("Email:    ", email)
+        print("Password: ", password)
+        print()
 
-      consolePause()
-    elif choice == 2:
-      user = db.findUserByEmail(email)
+        print("\033[1;35m" + "1 " + "\033[0m" + "Enter Email")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Enter Password")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Login")
+        print("\033[1;35m" + "4 " + "\033[0m" + "Exit")
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=4)))
 
-      if user and user.getClassName() == "Student":
-        student = user
+        if choice == 1:
+            consoleClear()
+            print("Selected Enter Email")
+            email = prompt("Enter Email: ", validator=InputValidator())
+        elif choice == 2:
+            consoleClear()
+            print("Selected Enter Password")
+            password = prompt("Enter Password: ", validator=InputValidator())
+        elif choice == 3:
+            consoleClear()
+            role = database.signIn(email, password)
+            if role == "Student":
+                menuStudent(email)
+            elif role == "Admin":
+                menuAdmin(email)
+            elif role == "Faculty":
+                menuFaculty(email)
+            elif role == "Staff":
+                menuStaff(email)
+        elif choice == 4:
+            break
+        else:
+            print("Invalid choice. Please try again.")
+            consolePause()
+            continue
 
-        print("Student ID: ", student.getStudentID())
-        print("Full Name: ", student.getFullName())
+def menuStudent(email):
+    choice = 0
+    while choice != 3:
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|           STUDENT          |")
+        print("==============================")
+        print("\033[0m")
+        print("\033[1;35m" + "1 " + "\033[0m" + "Submit Documents")
+        print("\033[1;35m" + "2 " + "\033[0m" + "See Information")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Logout")
 
-        assignedSections = student.getEnrolledSections()
-        print("Assigned Sections:")
-        for sectionID in assignedSections:
-          section = db.findSectionByID(sectionID)
-          if section:
-            print("  - Section Name: ", section.getSectionName())
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=3)))
 
-            grade = student.getGrade(sectionID)
-            print("    Grade: ", grade)
-      else:
-        print("Invalid student data.")
-
-      consolePause()
-    elif choice == 3:
-      pass
-    else:
-      print("\033[1;31m")
-      print("Invalid choice. Please try again.")
-      print("\033[0m")
+        if choice == 1:
+            print("Selected Submit Documents")
+            # Open a file dialog
+            file = easygui.fileopenbox() # show an "Open" dialog box and return the path to the selected file
+            print(f'Document: {file}')
+            confirm = prompt("Do you want to proceed? (Y/N): ", validator=InputValidator(yes=True)).lower()
+            if confirm.lower() == "y":
+                database.uploadDocument(email, file)
+                print()
+                print("Documents have been uploaded.")
+            else:
+                print("Cancelled uploading documents.")
+            consolePause()
+        elif choice == 2:
+            student = database.getStudentByEmail(email)
+            if student is not None:
+                print(f"Student ID: {student.studentID}\nName: {student.fname} {student.mname} {student.lname}\nEmail: {student.email}\n")
+                database.displayStudentGrades(student.studentID)
+            else:
+                print("Invalid student data.")
+            consolePause()
+        elif choice == 3:
+            pass
+        else:
+            print("\033[1;31m")
+            print("Invalid choice. Please try again.")
+            print("\033[0m")
 
 def menuFaculty(email):
-  choice = 0
-  while choice != 4:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|           FACULTY          |")
-    print("==============================")
-    print("\033[0m")
+    choice = 0
+    while choice != 4:
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|           FACULTY          |")
+        print("==============================")
+        print("\033[0m")
 
-    print("1. Input Student Grades")
-    print("2. Search Student Records")
-    print("3. Generate Class Report")
-    print("4. Logout")
+        print("\033[1;35m" + "1 " + "\033[0m" + "Input Student Grades")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Search Student Records")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Generate Class Report")
+        print("\033[1;35m" + "4 " + "\033[0m" + "Logout")
 
-    print()
-    print("\033[1;34m", end="")
-    print("Enter your choice: ", end="")
-    print("\033[0m", end="")
-    choice = int(input())
-    input().strip()
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=4)))
 
-    if choice == 1:
-      sectionID, studentID, grade = 0, 0, 0.0
-      print("Selected Input Student Grades")
-      match = db.findUserByEmail(email)
-      if match:
-        faculty = match
-        if isinstance(faculty, Faculty):
-          # Display the assigned sections
-          assignedSections = faculty.getAssignedSections()
-          print("Assigned Sections")
-          for sections in assignedSections:
-            print("Sections: ", sections)
-          print("Enter the Section ID to Grade: ", end="")
-          sectionID = int(input())
-          input().strip()
-
-          # Display enrolled students in section
-          sectionMatch = db.findSectionByID(sectionID)
-          if sectionMatch:
-            section = sectionMatch
-            # Check if faculty is assigned to that section or not
-            assigned = db.checkFacultyInSection(email, section)
-            if assigned:
-              print("Students")
-              enrolledStudentIDs = section.getEnrolledStudentIDs()
-              for students in enrolledStudentIDs:
-                print("Students: ", students)
-              print("Enter the Student ID to Grade: ", end="")
-              studentID = int(input())
-              input().strip()
-
-              # Search for the student using the ID
-              studentMatch = db.findStudentByID(studentID)
-              if studentMatch:
-                student = studentMatch
-                if studentMatch:
-                  print("Input the grade: ", end="")
-                  grade = float(input())
-                  input().strip()
-                  faculty.setStudentGrade(student, section.getSectionID(), grade)
-                  print("Grade: ", student.getGrade(section.getSectionID()))
-                  db.saveDatabase("../data/")
-              else:
-                print("No student with the inputted ID has been found.")
+        if choice == 1:
+            consoleClear()
+            print("Selected Input Student Grades")
+            database.displayFacultyCourses(email)
+            sectionName = prompt("Enter Section Name: ", validator=InputValidator())
+            section = database.getSectionByName(sectionName)
+            if not section:
+                print(f'Section {sectionName} does not exist.')
+                consolePause()
                 continue
-        consolePause()
-    elif choice == 2:
-      email = ""
-      print("Enter student email: ", end="")
-      email = input()
-      input().strip()
-      match = db.findUserByEmail(email)
-      if match:
-        student = match
-        print("StudentID: ", student.getStudentID(), "Name: ", student.getFullName())
-      consolePause()
-    elif choice == 3:
-      while True:
-        print("Selected Generate Class Report")
-        print("Enter Section ID to generate class report for: ", end="")
-        sectionID = int(input())
-        input().strip()
-        section = db.findSectionByID(sectionID)
-
-        if section:
-          # Check if faculty is assigned to that section or not
-          assigned = db.checkFacultyInSection(email, section)
-          if assigned:
-            db.printClassReport(section)
-          else:
-            print("Cannot access section that is not assigned to faculty")
+            studentID = int(prompt("Enter Student ID to grade: ", validator=InputValidator(num=True)))
+            student = database.getStudentByID(studentID)
+            if not student:
+                print(f'Student ID {studentID} does not exist.')
+                consolePause()
+                continue
+            grade = int(prompt("Enter grade: ", validator=InputValidator(numMenu=100)))
+            database.gradeStudent(student.studentID, section.sectionID, grade)
+        elif choice == 2:
+            consoleClear()
+            print("Selected Search Student Records")
+            database.displayFacultyCourses(email)
+            studentID = int(prompt("Enter Student ID: ", validator=InputValidator(num=True)))
+            student = database.getStudentByID(studentID)
+            faculty = database.getFacultyByEmail(email)
+            print(f'Student ID: {student.studentID}\nName: {student.fname} {student.mname} {student.lname}\nEmail: {student.email}\n')
+            database.displayStudentGrades(studentID, faculty.facultyID)
+            consolePause()
+        elif choice == 3:
+            consoleClear()
+            print("Selected Generate Class Report")
+            database.displayAllCourses()
+            courseName = prompt("Enter Course Name: ", validator=InputValidator())
+            course = database.getCourseByName(courseName)
+            if not course:
+                print(f'Course {courseName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllSections(courseName)
+            sectionName = prompt("Enter Section Name: ", validator=InputValidator())
+            section = database.getSectionByName(sectionName)
+            if not section:
+                print(f'Section {sectionName} does not exist.')
+                consolePause()
+                continue
+            database.getClassReport(sectionName)
+            consolePause()
+            continue
+        elif choice == 4:
+            break
         else:
-          print("Section not found.")
-          consolePause()
-          continue
-
-        consolePause()
-        break
-    elif choice == 4:
-      break
-    else:
-      print("\033[1;31m", end="")
-      print("Invalid choice. Please try again.")
-      print("\033[0m", end="")
-
+            print("\033[1;31m")
+            print("Invalid choice. Please try again.")
+            print("\033[0m")
+            
+            
 def menuStaff(email):
-  choice = 0
-  while choice != 4:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|            STAFF           |")
-    print("==============================")
-    print("\033[0m")
-
-    print("1. Display Applicants (Enrollment)")
-    print("2. Search Student Records")
-    print("3. Generate Class/Course Report")
-    print("4. Logout")
-
-    print()
-    print("\033[1;34m", end="")
-    choice = int(input("Enter your choice: "))
-    print("\033[0m")
-    if choice == 1:
-      while True:
+    choice = 0
+    while choice != 4:
         consoleClear()
-        applicantID = int(input("Enter the Applicant ID: "))
-        match = db.findApplicantByID(applicantID)
-        if match:
-          applicant = dynamic_cast[Applicant](match)
-          if applicant:
-            db.approveApplicant(applicant)
-            print("Applicant Approved!")
+        print("\033[1;32m")
+        print("==============================")
+        print("|            STAFF           |")
+        print("==============================")
+        print("\033[0m")
+
+        print("\033[1;35m" + "1 " + "\033[0m" + "Display Applicants (Enrollment)")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Search Student Records")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Generate Class Report")
+        print("\033[1;35m" + "4 " + "\033[0m" + "Logout")
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=4)))
+
+        if choice == 1:
+            app_choice = 0
+            while app_choice != 3:
+                consoleClear()
+                database.displayAllApplicants()
+                print("")
+                print("\033[1;35m" + "1 " + "\033[0m" + "Approve an applicant")
+                print("\033[1;35m" + "2 " + "\033[0m" + "Reject an applicant")
+                print("\033[1;35m" + "3 " + "\033[0m" + "Go back to staff menu")
+                app_choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=3)))
+                if app_choice == 1:
+                    applicantID = int(prompt("Enter the Applicant ID: ", validator=InputValidator(num=True)))
+                    database.approveApplicant(applicantID)
+                elif app_choice == 2:
+                    applicantID = int(prompt("Enter the Applicant ID: ", validator=InputValidator(num=True)))
+                    applicant = database.getApplicantByID(applicantID)
+                    if not applicant:
+                        print(f'Applicant {applicantID} does not exist.')
+                        consolePause()
+                        continue
+                    confirm = prompt("Do you want to proceed? (Y/N): ", validator=InputValidator(yes=True)).lower()
+                    if confirm == "y":
+                        database.removeApplicant(applicantID)
+                    else:
+                        print("Applicant rejection cancelled.")
+                elif app_choice == 3:
+                    continue
+                consolePause()
+        elif choice == 2:
+            consoleClear()
+            print("Selected Search Student Records")
+            studentID = int(prompt("Enter Student ID: ", validator=InputValidator(num=True)))
+            student = database.getStudentByID(studentID)
+            print(f'Student ID: {student.studentID}\nName: {student.fname} {student.mname} {student.lname}\nEmail: {student.email}\n')
+            database.displayStudentGrades(studentID)
+            database.displayStudentDocuments(studentID)
+            consolePause()
+        elif choice == 3:
+            consoleClear()
+            print("Selected Generate Class Report")
+            database.displayAllCourses()
+            courseName = prompt("Enter Course Name: ", validator=InputValidator())
+            course = database.getCourseByName(courseName)
+            if not course:
+                print(f'Course {courseName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllSections(courseName)
+            sectionName = prompt("Enter Section Name: ", validator=InputValidator())
+            section = database.getSectionByName(sectionName)
+            if not section:
+                print(f'Section {sectionName} does not exist.')
+                consolePause()
+                continue
+            database.getClassReport(sectionName)
+            consolePause()
+            continue
+        elif choice == 4:
+            break
         else:
-          print("Applicant Not Found! Please try again.")
-        break
-    elif choice == 2:
-      match = input("Enter student email: ")
-      user = db.findUserByEmail(match)
-      if user and user.getClassName() == "Student":
-        student = dynamic_cast[Student](user)
-        print("Student ID: ", student.getStudentID())
-        print("Full Name: ", student.getFullName())
-        assignedSections = student.getEnrolledSections()
-        for sectionID in assignedSections:
-          section = db.findSectionByID(sectionID)
-          if section:
-            print("Section Name: ", section.getSectionName())
-            grade = student.getGrade(sectionID)
-            print("Grade: ", grade)
-        consolePause()
-      else:
-        print("No student with the inputted email found.")
-        consolePause()
-        continue
-    elif choice == 3:
-      while True:
-        consoleClear()
-        print("Selected Generate Class Report")
-        sectionID = int(input("Enter Section ID to generate class report for: "))
-        section = db.findSectionByID(sectionID)
-        if section:
-          db.printClassReport(section)
-        else:
-          print("Section not found.")
-          consolePause()
-          continue
-        consolePause()
-        break
-    elif choice == 6:
-      courseID = input("Enter the course: ")
-      match = db.findCourseByID(courseID)
-      if match:
-        print()
-        print("Course ", courseID, " has been found.")
-        print("Course Name: ", match.getCourseName())
-        print()
-        print("Sections in this Course:")
-        
-        consolePause()
-        sectionID = int(input("Enter the section: "))
-        sectionMatch = db.findSectionByID(sectionID)
-        if sectionMatch:
-          email = input("Enter the faculty email: ")
-          userMatch = db.findUserByEmail(email)
-          if userMatch:
-            faculty = dynamic_cast[Faculty](userMatch)
-            faculty.setAssignedSection(sectionMatch.getSectionID())
-        break
-      else:
-        print()
-        print("No match has been found.")
-        consolePause()
-        continue
-    elif choice == 4:
-      break
-    else:
-      print("\033[1;31m")
-      print("Invalid choice. Please try again.")
-      print("\033[0m")
+            print("\033[1;31m")
+            print("Invalid choice. Please try again.")
+            print("\033[0m")
+
 
 def menuAdmin(email):
-  choice = 0
-  while choice != 8:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|            ADMIN           |")
-    print("==============================")
-    print("\033[0m")
-
-    print("1. Create User")
-    print("2. Remove User")
-    print("3. Create Course")
-    print("4. Find Existing Course/Section")
-    print("5. Create Section")
-    print("6. Add Faculty to Section")
-    print("7. Add Student to Section")
-    print("8. Logout")
-
-    print()
-    print("\033[1;34m", end="")
-    print("Enter your choice: ", end="")
-    choice = int(input())
-    input()
-    print()
-
-    if choice == 1:
-      menuCreateUser()
-    elif choice == 2:
-      consoleClear()
-      print("Selected Remove User")
-      search = input("Enter the email of the user to remove: ")
-      match = db.findUserByEmail(search)
-      if match:
-        print()
-        print(f"User {search} has been found.")
-        print("User Name: ", match.getFullName())
-        print()
-        confirm = input("Are you sure you want to remove this user? (Y/N): ")
-        if confirm == "y" or confirm == "Y":
-          if isinstance(match, Student):
-            db.removeStudent(match)
-          elif isinstance(match, Faculty):
-            db.removeFaculty(match)
-          elif isinstance(match, Staff):
-            db.removeStaff(match)
-          elif isinstance(match, Admin):
-            db.removeAdmin(match)
-          print()
-          print("User has been removed.")
-        else:
-          print("User removal cancelled.")
-        consolePause()
-        continue
-      else:
-        print()
-        print("No match has been found.")
-        consolePause()
-        continue
-
-      consolePause()
-    elif choice == 3:
-      consoleClear()
-      print("Selected Create Course")
-      courseName = input("Enter Course Name: ")
-      db.createCourse(courseName)
-      print()
-      print("Course has been created.")
-      consolePause()
-    elif choice == 4:
-      while True:
+    choice = 0
+    while choice != 8:
         consoleClear()
-        print("Selected Find Existing Course")
-        search = input("Search For Existing Course (0 to exit): ")
-        if search == "0":
-          break
-        match = db.findCourseByID(search)
-        if match:
-          print()
-          print(f"Course {search} has been found.")
-          print("Course Name: ", match.getCourseName())
-          print()
-          print("Sections in this Course:")
-          db.printListSectionByCourse(match)
-          consolePause()
-          break
-        else:
-          print()
-          print("No match has been found.")
-          consolePause()
-          continue
-    elif choice == 5:
-      while True:
-        print("Selected Create Section")
-        search = input("Search For Existing Course (0 to exit): ")
-        if search == "0":
-          break
-        match = db.findCourseByID(search)
-        if match:
-          courseID = match.getCourseID()
-        else:
-          print()
-          print("No match has been found.")
-          consolePause()
-          continue
-        print()
-        print(f"Course {search} has been found.")
-        print("Course Name: ", match.getCourseName())
+        print("\033[1;32m")
+        print("==============================")
+        print("|            ADMIN           |")
+        print("==============================")
+        print("\033[0m")
 
-        sectionName = input("Enter Section Name (0 to exit): ")
-        if sectionName == "0":
-          break
-
-        db.createSection(courseID, sectionName)
+        print("\033[1;35m" + "1 " + "\033[0m" + "Create User")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Remove User")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Create Course")
+        print("\033[1;35m" + "4 " + "\033[0m" + "Find Existing Course/Section")
+        print("\033[1;35m" + "5 " + "\033[0m" + "Create Section")
+        print("\033[1;35m" + "6 " + "\033[0m" + "Add Faculty to Section")
+        print("\033[1;35m" + "7 " + "\033[0m" + "Add Student to Section")
+        print("\033[1;35m" + "8 " + "\033[0m" + "Logout")
 
         print()
-        print("Course has been created.")
-        consolePause()
-        break
-    elif choice == 6:
-      sectionID = int(input("Enter Section ID to add faculty to: "))
-      section = db.findSectionByID(sectionID)
-      if section:
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=8)))
         print()
-        print(f"Section {sectionID} has been found.")
-        print("Section Name: ", section.getSectionName())
-        print()
-        facultyID = int(input("Enter the faculty ID to assign to the section: "))
-        user = db.findFacultyByID(facultyID)
-        if user:
-          print()
-          print(f"Faculty {facultyID} has been found.")
-          print("Faculty Name: ", user.getFullName())
-          print()
-          confirm = input("Are you sure you want to add this faculty? (Y/N): ")
-          if confirm == "y" or confirm == "Y":
-            db.addFacultyToSection(section, user)
-          else:
-            print("Cancelled adding faculty to section.")
-          consolePause()
-          break
+
+        if choice == 1:
+            menuCreateUser()
+        elif choice == 2:
+            email = prompt("Enter the email of the user to remove: ", validator=InputValidator())
+            database.removeUserByEmail(email)
+        elif choice == 3:
+            consoleClear()
+            print("Selected Create Course")
+            courseName = prompt("Enter Course Name: ", validator=InputValidator())
+            database.createCourse(courseName)
+            print()
+            print("Course has been created.")
+            consolePause()
+        elif choice == 4:
+            database.displayAllCourses()
+            break
+        elif choice == 5:
+            while True:
+                try:
+                    print("Selected Create Section")
+                    database.displayAllCourses()
+                    courseName = prompt("Enter the course name: ", validator=InputValidator())
+                    course = database.getCourseByName(courseName)
+                    if not course:
+                        print(f'Course {courseName} does not exist.')
+                        consolePause()
+                        continue
+                    sectionName = prompt("Enter the section name: ", validator=InputValidator())
+                    database.createSection(sectionName, courseName)
+                    print("Section has been created.")
+                    consolePause()
+                    break
+                except ValueError as e:
+                    print(e)
+                    consolePause()
+                    continue
+                except:
+                    print("Invalid input. Please try again.")
+                    consolePause()
+                    continue
+
+        elif choice == 6:
+            print("Selected Add Faculty to Section")
+            database.displayAllCourses()
+            courseName = prompt("Enter the course name: ", validator=InputValidator())
+            course = database.getCourseByName(courseName)
+            if not course:
+                print(f'Course {courseName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllSections(courseName)
+            sectionName = prompt("Enter Section Name to add Faculty to: ", validator=InputValidator())
+            section = database.getSectionByName(sectionName)
+            if not section:
+                print(f'Section {sectionName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllFaculty()
+            facultyID = int(prompt("Enter Faculty ID to add to section: ", validator=InputValidator(num=True)))
+            faculty = database.getFacultyByID(facultyID)
+            if not faculty:
+                print(f'Faculty ID {facultyID} does not exist.')
+                consolePause()
+                continue
+            database.addFacultyToSection(facultyID, sectionName)
+
+        elif choice == 7:
+            print("Selected Add Student to Section")
+            database.displayAllCourses()
+            courseName = prompt("Enter the course name: ", validator=InputValidator())
+            course = database.getCourseByName(courseName)
+            if not course:
+                print(f'Course {courseName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllSections(courseName)
+            sectionName = prompt("Enter Section Name to add Student to: ", validator=InputValidator())
+            section = database.getSectionByName(sectionName)
+            if not section:
+                print(f'Section {sectionName} does not exist.')
+                consolePause()
+                continue
+            database.displayAllStudents()
+            studentID = int(prompt("Enter Student ID to add to section: ", validator=InputValidator(num=True)))
+            student = database.getStudentByID(studentID)
+            if not student:
+                print(f'Student ID {studentID} does not exist.')
+                consolePause()
+                continue
+            database.addStudentToSection(studentID, sectionName)
+        elif choice == 8:
+            break
         else:
-          print()
-          print("No faculty with the inputted ID has been found.")
-          consolePause()
-          continue
-        consolePause()
-      else:
-        print()
-        print("No section with the inputted ID has been found.")
-        consolePause()
-        continue
-    elif choice == 7:
-      sectionID = int(input("Enter Section ID to enroll student to: "))
-      section = db.findSectionByID(sectionID)
-      if section:
-        print()
-        print(f"Section {sectionID} has been found.")
-        print("Section Name: ", section.getSectionName())
-        print()
-        studentID = int(input("Enter the student ID to add to the section: "))
-        user = db.findStudentByID(studentID)
-        if user:
-          print()
-          print(f"Student {studentID} has been found.")
-          print("Student Name: ", user.getFullName())
-          print()
-          confirm = input("Are you sure you want to enroll this student? (Y/N): ")
-          if confirm == "y" or confirm == "Y":
-            db.addStudentToSection(section, user)
-          else:
-            print("Cancelled adding faculty to section.")
-          consolePause()
-          break
-        else:
-          print()
-          print("No faculty with the inputted ID has been found.")
-          consolePause()
-          continue
-        consolePause()
-      else:
-        print()
-        print("No section with the inputted ID has been found.")
-        consolePause()
-        continue
-    elif choice == 8:
-      break
-    else:
-      print("\033[1;31m")
-      print("Invalid choice. Please try again.")
-      print("\033[0m")
+            print("\033[1;31m")
+            print("Invalid choice. Please try again.")
+            print("\033[0m")
+
 
 def menuCreateUser():
-  type = ""
-  choice = 0
-  while choice != 5:
-    consoleClear()
-    print("\033[1;32m")
-    print("==============================")
-    print("|         CREATE USER        |")
-    print("==============================")
-    print("\033[0m")
-    print()
-    print("Select the type of user to create: ")
-    print()
-    print("1. Student")
-    print("2. Faculty")
-    print("3. Staff")
-    print("4. Admin")
-    print("5. Back to Admin Menu")
-    print()
-    print("\033[1;34mEnter your choice: \033[0m")
-    choice = int(input())
-    input()
-    print()
+    type = ""
+    choice = 0
+    while choice != 5:
+        consoleClear()
+        print("\033[1;32m")
+        print("==============================")
+        print("|         CREATE USER        |")
+        print("==============================")
+        print("\033[0m")
+        print()
+        print("Select the type of user to create: ")
+        print()
+        print("\033[1;35m" + "1 " + "\033[0m" + "Student")
+        print("\033[1;35m" + "2 " + "\033[0m" + "Faculty")
+        print("\033[1;35m" + "3 " + "\033[0m" + "Staff")
+        print("\033[1;35m" + "4 " + "\033[0m" + "Admin")
+        print("\033[1;35m" + "5 " + "\033[0m" + "Back to Admin Menu")
+        print()
+        choice = int(prompt("Enter your choice: ", validator=InputValidator(numMenu=5)))
+        print()
 
-    if choice == 1:
-      print("Selected Student")
-      type = "Student"
-    elif choice == 2:
-      print("Selected Faculty")
-      type = "Faculty"
-    elif choice == 3:
-      print("Selected Staff")
-      type = "Staff"
-    elif choice == 4:
-      print("Selected Admin")
-      type = "Admin"
-    elif choice == 5:
-      pass
-    else:
-      print("\033[1;31mInvalid choice. Please try again.\033[0m")
+        if choice == 1:
+            print("Selected Student")
+            type = "Student"
+        elif choice == 2:
+            print("Selected Faculty")
+            type = "Faculty"
+        elif choice == 3:
+            print("Selected Staff")
+            type = "Staff"
+        elif choice == 4:
+            print("Selected Admin")
+            type = "Admin"
+        elif choice == 5:
+            pass
+        else:
+            print("\033[1;31mInvalid choice. Please try again.\033[0m")
 
-    dataDir = "data/"
-    if choice == 5:
-      break
-    elif type == "Student" or type == "Faculty" or type == "Staff":
-      fname = ""
-      mname = ""
-      lname = ""
-      print("Enter First Name:  ", end="")
-      fname = input()
-      print("Enter Middle Name: ", end="")
-      mname = input()
-      print("Enter Last Name:   ", end="")
-      lname = input()
+        if choice == 5:
+            break
+        elif type == "Student" or type == "Faculty" or type == "Staff":
+            fname = prompt("Enter First Name:  ", validator=InputValidator(alphaSpace=True))
+            mname = prompt("Enter Middle Name: ", validator=InputValidator(alphaSpace=True))
+            lname = prompt("Enter Last Name:   ", validator=InputValidator(alphaSpace=True))
 
-      if type == "Student":
-        db.createStudent(fname, mname, lname)
-      elif type == "Faculty":
-        db.createFaculty(fname, mname, lname)
-      elif type == "Staff":
-        db.createStaff(fname, mname, lname)
-    elif type == "Admin":
-      email = ""
-      password = ""
-      print("Enter Email:    ", end="")
-      email = input()
-      print("Enter Password: ", end="")
-      password = input()
+            if type == "Student":
+                database.createStudent(fname, mname, lname)
+            elif type == "Faculty":
+                database.createFaculty(fname, mname, lname)
+            elif type == "Staff":
+                database.createStaff(fname, mname, lname)
+        elif type == "Admin":
+            email = prompt("Enter Email:    ", validator=InputValidator())
+            password = prompt("Enter Password: ", validator=InputValidator())
 
-      db.createAdmin(email, password)
+            database.createAdmin(email, password)
 
-    print()
-    print("User has been created.")
-    consolePause()
+        print()
+        print("User has been created.")
+        consolePause()
+
 
 def consoleClear():
-  if os.name == "nt":
-    os.system("cls") # For Windows
-  else:
-    os.system("clear") # For POSIX systems
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def consolePause():
-  if os.name == "nt":
-    print()
-    print("Press any key to continue...")
-    os.system("pause")
-  else:
-    print()
-    print("Press Enter to continue...")
-    input()
+    if os.name == "nt":
+        print()
+        os.system("pause")
+    else:
+        print()
+        print("Press Enter to continue...")
+        input()
 
 choice = 0
 
 while choice != 3:
-  choice = menuMain()
-  if choice == 1: # Enrollment Page
-    menuEnrollment()
-  elif choice == 2: # Login Page
-    menuLogin()
-  elif choice == 3: # Exit
-    db.saveDatabase("../data/")
-    del db
-    break
-  elif choice == 4:
-    menuFaculty("testemail")
-  else:
-    print("Invalid choice. Please try again.")
+    choice = menuMain()
+    if choice == 1:    # Enrollment Page
+        menuEnrollment()
+    elif choice == 2:  # Login Page
+        menuLogin()
+    elif choice == 3:  # Exit
+        break
+    else:
+        print("Invalid choice. Please try again.")
