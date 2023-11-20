@@ -10,7 +10,5 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Student(User):
-    studentID = AutoField(null = False)
-    userID = ForeignKeyField(User, to_field="userID", null = False)
-    
-
+    studentID = AutoField(primary_key=True)
+    userID = ForeignKeyField(User, to_field="userID", on_delete="CASCADE")
