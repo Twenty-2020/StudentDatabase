@@ -10,10 +10,6 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Student(User):
-<<<<<<< HEAD
-    studentID = AutoField(primary_key=True)
-    userID = ForeignKeyField(User, to_field="userID", on_delete="CASCADE")
-=======
     studentID = AutoField(null = False)
     userID = ForeignKeyField(User, to_field="userID", null = False)
     fname = CharField(null = False)
@@ -26,4 +22,3 @@ class Student(User):
     grades = IntegerField()
     enrolledSections = CharField()
 
->>>>>>> 420c6cb36a7a23c0c073f7f52ee241f203b04f84

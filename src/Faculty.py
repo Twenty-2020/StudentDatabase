@@ -10,11 +10,6 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Faculty(User):
-<<<<<<< HEAD
-    facultyID = AutoField(primary_key=True)
-    userID = ForeignKeyField(User, to_field="userID", on_delete="CASCADE")
-
-=======
     facultyID = AutoField(null = False)
     userID = ForeignKeyField(User, to_field="userID", null = False)
     fname = CharField(null = False)
@@ -24,4 +19,3 @@ class Faculty(User):
     password = CharField()
     role = CharField()
     assignedSections = CharField()
->>>>>>> 420c6cb36a7a23c0c073f7f52ee241f203b04f84
