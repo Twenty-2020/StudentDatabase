@@ -9,5 +9,5 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Course(BaseModel):
-    courseID = AutoField(null = False)
-    coursename = CharField(null = False)
+    courseID = AutoField(primary_key=True)
+    courseName = CharField()

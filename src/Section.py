@@ -9,5 +9,5 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Section(BaseModel):
-    sectionID = AutoField(null = False)
-    sectionname = CharField(null = False)
+    sectionID = AutoField(primary_key=True)
+    sectionName = CharField()

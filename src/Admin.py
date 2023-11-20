@@ -11,5 +11,6 @@ db_file = os.path.join(parent_dir, 'studentdatabase.db')
 db = SqliteDatabase(db_file)
 
 class Admin(User):
-    adminID = AutoField(null = False)
-    userID = ForeignKeyField(User, to_field="userID", null = False)
+    adminID = AutoField(primary_key=True)
+    userID = ForeignKeyField(User, to_field="userID", on_delete="CASCADE")
+
